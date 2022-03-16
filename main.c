@@ -10,6 +10,14 @@
 #include <string.h>
 #include <unistd.h>
 
+int min,	batt_min,	wall_min;
+int max,	batt_max,	wall_max;
+int threshold,	batt_threshold,	wall_threshold;
+int down_step,	batt_down_step,	wall_down_step;
+int inertia,	batt_inertia,	wall_inertia;
+int step,	batt_step,	wall_step;
+int timefreq,	batt_timefreq,	wall_timefreq;
+
 
 /* define the policy to auto or manual */
 void set_policy(char* policy) {
@@ -33,6 +41,54 @@ void usage() {
     printf("obsdfreqd [-h] [-q] [-i cycles] [-l min_freq] [-m max_freq] [-d percent_down_freq_step] [-r threshold] [-s percent_freq_step] [-t milliseconds]\n");
 }
 
+// switch to wall profile
+void switch_wall() {
+    min = wall_min;
+    max = wall_max;
+    threshold = wall_threshold;
+    down_step = wall_down_step;
+    inertia = wall_inertia;
+    step = wall_step;
+    timefreq = wall_timefreq;
+}
+
+// switch to battery profile
+void switch_batt() {
+    min = batt_min;
+    max = batt_max;
+    threshold = batt_threshold;
+    down_step = batt_down_step;
+    inertia = batt_inertia;
+    step = batt_step;
+    timefreq = batt_timefreq;
+}
+
+// assign values to variable if comma separated
+// if not, assign value to two variables
+void assign_values_from_param(char* parameter, int* charging, int* battery) {
+    int count = 0;
+    char *token = strtok(parameter, ",");
+
+    while (token != NULL) {
+        if(count == 0)
+            *charging = atoi(token);
+        if(count == 1)
+            *battery = atoi(token);
+        token = strtok(NULL, ",");
+        count++;
+        if(count > 1)
+            break;
+    }
+
+    if(count == 0) {
+        *charging = atoi(parameter);
+        *battery = *charging;
+    }
+
+    if(count == 1)
+        *battery = *charging;
+}
+
 int main(int argc, char *argv[]) {
 
     int opt;
@@ -46,57 +102,57 @@ int main(int argc, char *argv[]) {
     int cpu_usage_percent = 0, cpu_usage;
     size_t len, len_cpu;
 
+    min =		batt_min=	wall_min = 0;
+    max =		batt_max=	wall_max = 100;
+    threshold =		batt_threshold=	wall_threshold = 30;
+    down_step =		batt_down_step=	wall_down_step = 100;
+    inertia =		batt_inertia=	wall_inertia = 0;
+    step =		batt_step=	wall_step = 10;
+    timefreq =		batt_timefreq=	wall_timefreq = 300;
+
     unveil("/", "r");
     unveil(NULL, NULL);
-
-    int min = 0;
-    int max = 100;
-    int threshold = 30;
-    int down_step = 100;
-    int inertia = 0;
-    int step = 10;
-    int timefreq = 300;
 
     while((opt = getopt(argc, argv, "d:hi:l:m:qr:s:t:")) != -1) {
         switch(opt) {
         case 'd':
-            down_step = atoi(optarg);
+            assign_values_from_param(optarg, &wall_down_step, &batt_down_step);
             if(down_step > 100 || down_step <= 0)
                 err(1, "decay step must be positive and up to 100");
             break;
         case 'i':
-            inertia = atoi(optarg);
+            assign_values_from_param(optarg, &wall_inertia, &batt_inertia);
             if(inertia < 0)
                 err(1, "inertia must be positive");
             break;
         case 'l':
-            min = atoi(optarg);
+            assign_values_from_param(optarg, &wall_min, &batt_min);
             if(min > 100 || min < 0)
                 err(1, "minimum frequency must be between 0 and 100");
             break;
         case 'm':
-            max = atoi(optarg);
+            assign_values_from_param(optarg, &wall_max, &batt_max);
             if(max > 100 || max < 0)
                 err(1, "maximum frequency must be between 0 and 100");
             break;
         case 'q':
-             quiet = 1;
-             break;
+            quiet = 1;
+            break;
         case 'r':
-             threshold = atoi(optarg);
+            assign_values_from_param(optarg, &wall_threshold, &batt_threshold);
              if(threshold < 0)
                  err(1, "CPU use threshold must be positive");
              break;
         case 's':
-            step = atoi(optarg);
+            assign_values_from_param(optarg, &wall_step, &batt_step);
             if(step > 100 || step <= 0)
                 err(1, "step must be positive and up to 100");
             break;
         case 't':
-             timefreq = atoi(optarg);
-             if(timefreq <= 0)
-                 err(1, "time frequency must be positive");
-             break;
+            assign_values_from_param(optarg, &wall_timefreq, &batt_timefreq);
+            if(wall_timefreq <= 0 || batt_timefreq <= 0)
+                err(1, "time frequency must be positive");
+            break;
         case 'h':
         default:
            usage();
@@ -129,7 +185,13 @@ int main(int argc, char *argv[]) {
         // get if using power plug or not
         if (sysctl(mib_powerplug, 2, &value, &len, NULL, 0) == -1)
             err(1, "sysctl");
+
         if(quiet == 0) printf("power: %i |", value);
+        if(value ==0)
+            switch_batt();
+        else
+            switch_wall();
+
 
         // get current frequency
         if (sysctl(mib_perf, 2, &current_frequency, &len, NULL, 0) == -1)
