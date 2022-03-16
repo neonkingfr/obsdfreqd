@@ -10,6 +10,13 @@ As easy as `make`
 
 Run `obsdfreqd` as root, quit with `Ctrl+C`.
 
+# Usage
+
+- `-h` show usage
+- `-m maxfrequency` set the maximum frequency the CPU can reach in percent, 100% is default
+- `-l minfrequency` set the minimum frequency the CPU must be lowered to, 0% is default
+- `-s stepfrequency` set the percent of frequency added every cycle when increasing, 10% is default
+
 # What is it doing?
 
 **obsdfreqd** will change the perfpolicy sysctl to manual and will change the CPU frequency by polling every often (like 100ms) the CPU load and change the frequency accordingly, the perfpolicy is set to auto upon exit.

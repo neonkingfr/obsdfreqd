@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     int max = 100;
     int step = 10;
 
-    while((opt = getopt(argc, argv, "l:m:s:")) != -1) {
+    while((opt = getopt(argc, argv, "hl:m:s:")) != -1) {
         switch(opt) {
         case 'l':
             min = atoi(optarg);
@@ -66,6 +66,7 @@ int main(int argc, char *argv[]) {
             if(step > 100 || step <= 0)
                 err(1, "step must be positive and up to 100");
             break;
+        case 'h':
         default:
            usage();
            return 1;
