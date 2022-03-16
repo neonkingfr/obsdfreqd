@@ -10,6 +10,14 @@ As easy as `make`
 
 Run `obsdfreqd` as root, quit with `Ctrl+C`.
 
+# Installation
+
+`make install` as root, enable the service using `rcctl enable
+obsdfreqd` and set flags as you want using `rcctl set obsdfreqd
+flags -q` for example.
+
+Start the service with `rcctl start obsdfreqd`.
+
 # Usage
 
 Parameters are applied when both plugged on the wall or on battery, parameters can have two values comma separated to give different values when plugged on wall and for when on battery.
