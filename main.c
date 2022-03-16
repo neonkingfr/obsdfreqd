@@ -12,7 +12,7 @@
 
 
 /* define the policy to auto or manual */
-void set_policy(const char* policy) {
+void set_policy(char* policy) {
     int mib[2];
     size_t len;
 
