@@ -19,3 +19,7 @@ The end goal is to provide a feature rich CPU frequency scheduler for the follow
 - battery saving while keeping responsiveness when needed (which apm -L doesn't do)
 - reduce heat or electrical coil noise when on powerplug because the new default assuming mainboard and CPU can manage itself doesn't work well
 - reduce power consumption for system on powerplug while staying performant enough
+
+# Relation to the OpenBSD project
+
+This is mostly a playground project so I can experiment with CPU frequency scheduling, there is no goal to import it into the OpenBSD kernel ever, but maybe I can learn here and improve the kernel code later.
