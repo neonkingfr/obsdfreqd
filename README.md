@@ -14,10 +14,10 @@ Run `obsdfreqd` as root, quit with `Ctrl+C`.
 
 - `-h` show usage
 - `-d downstepfrequency` sets the steps removed every cycle when decaying, default to 100
-- `-i inertia` sets the number of cycles after which the frequency will decay
+- `-i inertia` sets the number of cycles after which the frequency will decay, 0 is the default
 - `-m maxfrequency` sets the maximum frequency the CPU can reach in percent, 100% is default
 - `-l minfrequency` sets the minimum frequency the CPU must be lowered to, 0% is default
-- `-r threshold` sets the CPU usage in % that will trigger the frequency increase
+- `-r threshold` sets the CPU usage in % that will trigger the frequency increase, 30% is the default
 - `-s stepfrequency` sets the percent of frequency added every cycle when increasing, 10% is default
 - `-t timefreq` sets the milliseconds between each poll, 300 is the default
 
