@@ -30,7 +30,7 @@ void quit_gracefully() {
 }
 
 void usage() {
-    printf("obsdfreqd [-l min_freq]  [-m max_freq] [-s percent_freq_step] [-t milliseconds]\n");
+    printf("obsdfreqd [-h] [-i cycles] [-l min_freq] [-m max_freq] [-d percent_down_freq_step] [-r threshold] [-s percent_freq_step] [-t milliseconds]\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
     int mib_powerplug[2];
     int mib_load[2];
     long cpu[CPUSTATES], cpu_previous[CPUSTATES];
-    int frequency;
-    int value, current_frequency;
+    int frequency = 0;
+    int value, current_frequency, inertia_timer = 0;
     int cpu_usage_percent = 0, cpu_usage;
     size_t len, len_cpu;
 
@@ -50,11 +50,24 @@ int main(int argc, char *argv[]) {
 
     int min = 0;
     int max = 100;
+    int threshold = 30;
+    int down_step = 100;
+    int inertia = 0;
     int step = 10;
     int timefreq = 300;
 
-    while((opt = getopt(argc, argv, "hl:m:s:t:")) != -1) {
+    while((opt = getopt(argc, argv, "d:hi:l:m:r:s:t:")) != -1) {
         switch(opt) {
+        case 'd':
+            down_step = atoi(optarg);
+            if(down_step > 100 || down_step <= 0)
+                err(1, "decay step must be positive and up to 100");
+            break;
+        case 'i':
+            inertia = atoi(optarg);
+            if(inertia < 0)
+                err(1, "inertia must be positive");
+            break;
         case 'l':
             min = atoi(optarg);
             if(min > 100 || min < 0)
@@ -65,6 +78,11 @@ int main(int argc, char *argv[]) {
             if(max > 100 || max < 0)
                 err(1, "maximum frequency must be between 0 and 100");
             break;
+        case 'r':
+             threshold = atoi(optarg);
+             if(threshold < 0)
+                 err(1, "CPU use threshold must be positive");
+             break;
         case 's':
             step = atoi(optarg);
             if(step > 100 || step <= 0)
@@ -144,26 +162,44 @@ int main(int argc, char *argv[]) {
         len = sizeof(frequency);
 
         // small brain condition to increase CPU
-        if(cpu_usage_percent > 30) {
+        if(cpu_usage_percent > threshold) {
 
             // increase frequency by step if under max
-            if(frequency < max)
+            if(frequency+step < max)
                 frequency = frequency + step;
+            else
+                frequency = max;
 
             // don't try to set frequency more than 100%
             if( frequency > 100 )
                 frequency = 100;
 
+            inertia_timer = inertia;
+
             if (sysctl(mib_perf, 2, NULL, 0, &frequency, len) == -1)
                 err(1, "sysctl");
         }
         else {
-            frequency = min;
-            if (sysctl(mib_perf, 2, NULL, 0, &frequency, len) == -1)
-                err(1, "sysctl");
+
+            if(inertia_timer == 0) {
+                // keep frequency more than min
+                if(frequency-down_step < min)
+                    frequency = min;
+                else
+                    frequency = frequency - down_step;
+
+                // don't try to set frequency below 0%
+                if (frequency < 0 )
+                    frequency = 0;
+
+                if (sysctl(mib_perf, 2, NULL, 0, &frequency, len) == -1)
+                    err(1, "sysctl");
+            } else {
+                inertia_timer--;
+            }
         }
 
-        printf("new freq: %3i |", frequency);
+        printf("inertia: %2i |new freq: %3i", inertia_timer, frequency);
 
         printf("\n");
         usleep(1000*timefreq);
