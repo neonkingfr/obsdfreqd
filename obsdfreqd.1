@@ -1,0 +1,76 @@
+.Dd $Mdocdate: March 16 2021 $
+.Dt OBSDFREQD 1
+.Os
+.Sh NAME
+.Nm obsdfreqd
+.Nd manage the CPU frequency on OpenBSD from userland
+.Sh SYNOPSIS
+.Nm
+.Op Fl q
+.Op Fl h
+.Op Fl d Ar downstepfrequency
+.Op Fl i Ar inertia
+.Op Fl m Ar maxfrequency
+.Op Fl l Ar minfrequency
+.Op Fl r Ar threshold
+.Op Fl s Ar stepfrequency
+.Op Fl t Ar timefreq
+.Sh DESCRIPTION
+.Pp
+.Nm
+is a program to play with the CPU frequency scheduler by providing
+many variables involved in the process.
+.Nm
+will switch the frequency policy to manual to manage the frequency itself
+and will restore the policy to auto upon exit.
+.Sh OPTIONS
+Arguments can be comma separated to provide different values for when on battery,
+if so, the first value is used when power plug is connected and second value
+when on battery.
+.Bl -tag -width
+.It Op Fl q
+Suppress standard output display.
+.It Op Fl h
+Display usage
+.It Op Fl d Ar downstepfrequency
+Defines the frequency decrease step in percent.
+.It Op Fl i Ar inertia
+Defines the number of cycles under the CPU threshold before decreasing frequency.
+.It Op Fl m Ar maxfrequency
+Defines the maximum frequency in percent the CPU can be increased to.
+.It Op Fl l Ar minfrequency
+Defines the minimum frequency in percent the CPU can be reduced to.
+.It Op Fl r Ar threshold
+Defines the CPU usage in percent above which the frequency is increased.
+.It Op Fl s Ar stepfrequency
+Defines the frequency increase step in percent.
+.It Op Fl t Ar timefreq
+Defines the time in milliseconds between each cycle.
+.Ed
+.Sh EXIT STATUS
+.Pp
+In case of a fatal error,
+.Nm
+will exit on a status code 1.
+In normal operations,
+.Nm
+will exit on a status code 0.
+.Sh EXAMPLES
+This is a balanced power profile.
+.Bd -literal -offset indent
+obsdfreqd -t 150 -r 30 -d 10 -i 2
+.Ed
+.Pp
+Use different values for when on battery to save power.
+.Bd -literal -offset indent
+obsdfreqd -m 100,60 -r 25,40 -t 90,300 -d 10,100 -i 10,0
+.Ed
+.Sh DIAGNOSTICS
+.Nm
+has a verbose mode to get realtime information about frequency.
+.Sh AUTHORS
+.An See the LICENSE file for the authors .
+.Sh LICENSE
+See the LICENSE file for the terms of redistribution.
+.Sh BUGS
+There may be bugs.
