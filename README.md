@@ -47,7 +47,7 @@ The following profiles are a set of flags you can use with **obsdfreqd** to achi
 
 - battery saving but allow some limited speed: `-m 50 -r 40 -t 300` (it limits frequency to 50% while going down abruptly)
 - balanced: `-t 150 -r 30 -d 10 -i 2` (it polls often and decay slowly over time)
-- performance: `-t 300 -s 50 -i 5` (it increase fast and stay up long)
+- performance: `-t 90 -s 33 -i 10` (it increase fast and stay up long and polls often)
 
 # Relation to the OpenBSD project
 
