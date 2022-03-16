@@ -45,6 +45,9 @@ int main(int argc, char *argv[]) {
     int cpu_usage_total = 0, cpu_usage;
     size_t len, len_cpu;
 
+    unveil("/", "r");
+    unveil(NULL, NULL);
+
     int min = 0;
     int max = 100;
     int step = 10;
