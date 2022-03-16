@@ -60,7 +60,7 @@ The following profiles are a set of flags you can use with **obsdfreqd** to achi
 **Profiles with different behavior when on battery**:
 
 - high performance plugged in / battery saving but allow some limited speed: `-m 100,60 -r 25,40 -t 90,300 -d 10,100 -i 10,0`
-- low power/temperature when plugged in / battery saving: `-m 90,50 -r 40 -t 90 -d 50,100 -i 4,0`
+- low power/temperature when plugged in / battery saving: `-m 98,50 -r 40 -t 90 -d 50,100 -i 4,0`
 
 # Relation to the OpenBSD project
 
