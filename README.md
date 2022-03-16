@@ -40,6 +40,14 @@ The end goal is to provide a feature rich CPU frequency scheduler for the follow
 - reduce power consumption for system on powerplug while staying performant enough
 - provide setings for minimum and maximum frequency available in some automatic mode (people may have $reasons to use this)
 
+# Power profiles example
+
+The following profiles are a set of flags you can use with **obsdfreqd** to achieve a specific power usage.  They are likely to change and be enhanced.
+
+- battery saving but allow some limited speed: `-m 50 -r 40 -t 300` (it limits frequency to 50% while going down abruptly)
+- balanced: `-t 150 -r 30 -d 10 -i 2` (it polls often and decay slowly over time)
+- performance: `-t 300 -s 50 -i 5` (it increase fast and stay up long)
+
 # Relation to the OpenBSD project
 
 This is mostly a playground project so I can experiment with CPU frequency scheduling, there is no goal to import it into the OpenBSD kernel ever, but maybe I can learn here and improve the kernel code later.
