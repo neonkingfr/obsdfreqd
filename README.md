@@ -12,6 +12,8 @@ Run `obsdfreqd` as root, quit with `Ctrl+C`.
 
 # Usage
 
+Parameters are applied when both plugged on the wall or on battery, parameters can have two values comma separated to give different values when plugged on wall and for when on battery.
+
 - `-h` show usage
 - `-q` quiet mode, silence output
 - `-d downstepfrequency` sets the steps removed every cycle when decaying, default to 100
@@ -22,6 +24,10 @@ Run `obsdfreqd` as root, quit with `Ctrl+C`.
 - `-s stepfrequency` sets the percent of frequency added every cycle when increasing, 10% is default
 - `-t timefreq` sets the milliseconds between each poll, 300 is the default
 
+**Example**:
+
+`obsdfreqd -m 100,50 -r 40` will start the daemon, when power is plugged in, maximum frequency is 100 and threshold is 40, on battery the threshold is 40 and the max is 50.
+
 # Explanation
 
 The current algorithm works this way:
@@ -29,6 +35,8 @@ The current algorithm works this way:
 If CPU usage > `threshold`, increase frequency by `stepfrequency` up to `maxfrequency` every `timefreq` milliseconds and keep this frequency at least `inertia` cycles.
 
 If CPU usage <= `threshold`, reduce frequency by `downstepfrequency` down to `minfrequency` every `timefreq` milliseconds when `inertia` reached 0. `inertia` lose one point every cycle the CPU usage is below `threshold`.
+
+When switching from/to battery, values switch to mode specific when user defined.
 
 # What is it doing?
 
@@ -47,7 +55,12 @@ The following profiles are a set of flags you can use with **obsdfreqd** to achi
 
 - battery saving but allow some limited speed: `-m 50 -r 40 -t 300` (it limits frequency to 50% while going down abruptly)
 - balanced: `-t 150 -r 30 -d 10 -i 2` (it polls often and decay slowly over time)
-- performance: `-t 90 -s 33 -i 10` (it increase fast and stay up long and polls often)
+- performance: `-t 90 -r 25 -s 33 -i 10` (it increase fast and stay up long and polls often)
+
+**Profiles with different behavior when on battery**:
+
+- high performance plugged in / battery saving but allow some limited speed: `-m 100,60 -r 25,40 -t 90,300 -d 10,100 -i 10,0`
+- low power/temperature when plugged in / battery saving: `-m 90,50 -r 40 -t 90 -d 50,100 -i 4,0`
 
 # Relation to the OpenBSD project
 
