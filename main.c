@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     long cpu[CPUSTATES], cpu_previous[CPUSTATES];
     int frequency;
     int value, current_frequency;
-    int cpu_usage_total = 0, cpu_usage;
+    int cpu_usage_percent = 0, cpu_usage;
     size_t len, len_cpu;
 
     unveil("/", "r");
@@ -136,15 +136,15 @@ int main(int argc, char *argv[]) {
         //       cpu[5]-cpu_previous[5]);
         //printf("cpu usage = %i et idle = %i\n", cpu_usage, cpu[5] - cpu_previous[5]);
 
-        cpu_usage_total = 100-round(100*(cpu[5]-cpu_previous[5])/cpu_usage);
+        cpu_usage_percent = 100-round(100*(cpu[5]-cpu_previous[5])/cpu_usage);
         memcpy(cpu_previous, cpu, sizeof(cpu));
-        printf("usage: %3i%% |", cpu_usage_total);
+        printf("usage: %3i%% |", cpu_usage_percent);
 
         // change frequency
         len = sizeof(frequency);
 
         // small brain condition to increase CPU
-        if(cpu_usage_total > 30) {
+        if(cpu_usage_percent > 30) {
 
             // increase frequency by step if under max
             if(frequency < max)
