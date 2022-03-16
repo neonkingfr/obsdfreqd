@@ -30,7 +30,7 @@ void quit_gracefully() {
 }
 
 void usage() {
-    printf("obsdfreqd [-l min_freq]  [-m max_freq] [-s step]\n");
+    printf("obsdfreqd [-l min_freq]  [-m max_freq] [-s percent_freq_step] [-t milliseconds]\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -51,8 +51,9 @@ int main(int argc, char *argv[]) {
     int min = 0;
     int max = 100;
     int step = 10;
+    int timefreq = 300;
 
-    while((opt = getopt(argc, argv, "hl:m:s:")) != -1) {
+    while((opt = getopt(argc, argv, "hl:m:s:t:")) != -1) {
         switch(opt) {
         case 'l':
             min = atoi(optarg);
@@ -69,6 +70,11 @@ int main(int argc, char *argv[]) {
             if(step > 100 || step <= 0)
                 err(1, "step must be positive and up to 100");
             break;
+        case 't':
+             timefreq = atoi(optarg);
+             if(timefreq <= 0)
+                 err(1, "time frequency must be positive");
+             break;
         case 'h':
         default:
            usage();
@@ -160,7 +166,7 @@ int main(int argc, char *argv[]) {
         printf("new freq: %3i |", frequency);
 
         printf("\n");
-        usleep(1000*300);
+        usleep(1000*timefreq);
     }
 
    return(0);

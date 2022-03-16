@@ -13,9 +13,10 @@ Run `obsdfreqd` as root, quit with `Ctrl+C`.
 # Usage
 
 - `-h` show usage
-- `-m maxfrequency` set the maximum frequency the CPU can reach in percent, 100% is default
-- `-l minfrequency` set the minimum frequency the CPU must be lowered to, 0% is default
-- `-s stepfrequency` set the percent of frequency added every cycle when increasing, 10% is default
+- `-m maxfrequency` sets the maximum frequency the CPU can reach in percent, 100% is default
+- `-l minfrequency` sets the minimum frequency the CPU must be lowered to, 0% is default
+- `-s stepfrequency` sets the percent of frequency added every cycle when increasing, 10% is default
+- `-t timefreq` sets the milliseconds between each poll, 300 is the default
 
 # What is it doing?
 
