@@ -13,6 +13,7 @@ Run `obsdfreqd` as root, quit with `Ctrl+C`.
 # Usage
 
 - `-h` show usage
+- `-q` quiet mode, silence output
 - `-d downstepfrequency` sets the steps removed every cycle when decaying, default to 100
 - `-i inertia` sets the number of cycles after which the frequency will decay, 0 is the default
 - `-m maxfrequency` sets the maximum frequency the CPU can reach in percent, 100% is default

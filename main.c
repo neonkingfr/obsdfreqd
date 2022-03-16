@@ -30,7 +30,7 @@ void quit_gracefully() {
 }
 
 void usage() {
-    printf("obsdfreqd [-h] [-i cycles] [-l min_freq] [-m max_freq] [-d percent_down_freq_step] [-r threshold] [-s percent_freq_step] [-t milliseconds]\n");
+    printf("obsdfreqd [-h] [-q] [-i cycles] [-l min_freq] [-m max_freq] [-d percent_down_freq_step] [-r threshold] [-s percent_freq_step] [-t milliseconds]\n");
 }
 
 int main(int argc, char *argv[]) {
@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     int mib_load[2];
     long cpu[CPUSTATES], cpu_previous[CPUSTATES];
     int frequency = 0;
+    int quiet = 0;
     int value, current_frequency, inertia_timer = 0;
     int cpu_usage_percent = 0, cpu_usage;
     size_t len, len_cpu;
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]) {
     int step = 10;
     int timefreq = 300;
 
-    while((opt = getopt(argc, argv, "d:hi:l:m:r:s:t:")) != -1) {
+    while((opt = getopt(argc, argv, "d:hi:l:m:qr:s:t:")) != -1) {
         switch(opt) {
         case 'd':
             down_step = atoi(optarg);
@@ -78,6 +79,9 @@ int main(int argc, char *argv[]) {
             if(max > 100 || max < 0)
                 err(1, "maximum frequency must be between 0 and 100");
             break;
+        case 'q':
+             quiet = 1;
+             break;
         case 'r':
              threshold = atoi(optarg);
              if(threshold < 0)
@@ -125,12 +129,12 @@ int main(int argc, char *argv[]) {
         // get if using power plug or not
         if (sysctl(mib_powerplug, 2, &value, &len, NULL, 0) == -1)
             err(1, "sysctl");
-        printf("power: %i |", value);
+        if(quiet == 0) printf("power: %i |", value);
 
         // get current frequency
         if (sysctl(mib_perf, 2, &current_frequency, &len, NULL, 0) == -1)
             err(1, "sysctl");
-        printf("perf: %3i |", current_frequency);
+        if(quiet == 0) printf("perf: %3i |", current_frequency);
 
         // get where the CPU time is spent, last field is IDLE
         if (sysctl(mib_load, 2, &cpu, &len_cpu, NULL, 0) == -1)
@@ -145,18 +149,18 @@ int main(int argc, char *argv[]) {
             cpu[5]-cpu_previous[5];
 
         // debug
-        //printf("\nDEBUG: User: %3i\tNice: %3i\t Sys: %3i\tSpin: %3i\t Intr: %3i\tIdle: %3i\n",
+        //if(quiet == 0) printf("\nDEBUG: User: %3i\tNice: %3i\t Sys: %3i\tSpin: %3i\t Intr: %3i\tIdle: %3i\n",
         //       cpu[0]-cpu_previous[0],
         //       cpu[1]-cpu_previous[1],
         //       cpu[2]-cpu_previous[2],
         //       cpu[3]-cpu_previous[3],
         //       cpu[4]-cpu_previous[4],
         //       cpu[5]-cpu_previous[5]);
-        //printf("cpu usage = %i et idle = %i\n", cpu_usage, cpu[5] - cpu_previous[5]);
+        //if(quiet == 0) printf("cpu usage = %i et idle = %i\n", cpu_usage, cpu[5] - cpu_previous[5]);
 
         cpu_usage_percent = 100-round(100*(cpu[5]-cpu_previous[5])/cpu_usage);
         memcpy(cpu_previous, cpu, sizeof(cpu));
-        printf("usage: %3i%% |", cpu_usage_percent);
+        if(quiet == 0) printf("usage: %3i%% |", cpu_usage_percent);
 
         // change frequency
         len = sizeof(frequency);
@@ -199,9 +203,9 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        printf("inertia: %2i |new freq: %3i", inertia_timer, frequency);
+        if(quiet == 0) printf("inertia: %2i |new freq: %3i", inertia_timer, frequency);
 
-        printf("\n");
+        if(quiet == 0) printf("\n");
         usleep(1000*timefreq);
     }
 
