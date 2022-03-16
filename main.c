@@ -172,7 +172,8 @@ int main(int argc, char *argv[]) {
     len = sizeof(value);
     len_cpu = sizeof(cpu);
 
-    signal(SIGINT, quit_gracefully);
+    signal(SIGINT,  quit_gracefully);
+    signal(SIGTERM, quit_gracefully);
     set_policy("manual");
 
     // avoid weird reading for first delta
