@@ -1,7 +1,13 @@
 PREFIX=/usr/local
+LDFLAGS  = -lm
 
-obsdfreqd:
-	clang main.c -o obsdfreqd -lm
+CFLAGS  += -pedantic -Wall -Wextra -Wmissing-prototypes \
+           -Wunused-function -Wshadow -Wstrict-overflow -fno-strict-aliasing \
+           -Wunused-variable -Wstrict-prototypes -Wwrite-strings \
+		   -Os
+
+obsdfreqd: main.c
+	${CC} ${CFLAGS} ${LDFLAGS} main.c -o $@
 
 all: obsdfreqd
 

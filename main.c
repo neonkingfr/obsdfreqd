@@ -18,30 +18,37 @@ int inertia,	batt_inertia,	wall_inertia;
 int step,	batt_step,	wall_step;
 int timefreq,	batt_timefreq,	wall_timefreq;
 
+void set_policy(const char*);
+void quit_gracefully(int signum);
+void usage(void);
+void switch_wall(void);
+void switch_batt(void);
+void assign_values_from_param(char*, int*, int*);
 
 /* define the policy to auto or manual */
-void set_policy(char* policy) {
+void set_policy(const char* policy) {
     int mib[2];
     size_t len;
 
     mib[0] = CTL_HW;
     mib[1] = HW_PERFPOLICY;
     len = sizeof(policy);
-    if (sysctl(mib, 2, NULL, 0, policy, len) == -1)
+    if (sysctl(mib, 2, NULL, 0, (void *)policy, len) == -1)
         err(1, "sysctl");
 }
 
 /* restore policy auto upon exit */
-void quit_gracefully() {
+void quit_gracefully(int signum) {
+	printf("Caught signal %d, set auto policy\n", signum);
     set_policy("auto");
     exit(0);
 }
 
-void usage() {
+void usage(void) {
     printf("obsdfreqd [-h] [-q] [-i cycles] [-l min_freq] [-m max_freq] [-d percent_down_freq_step] [-r threshold] [-s percent_freq_step] [-t milliseconds]\n");
 }
 
-// switch to wall profile
+/* switch to wall profile */
 void switch_wall() {
     min = wall_min;
     max = wall_max;
@@ -52,7 +59,7 @@ void switch_wall() {
     timefreq = wall_timefreq;
 }
 
-// switch to battery profile
+/* switch to battery profile */
 void switch_batt() {
     min = batt_min;
     max = batt_max;
@@ -63,8 +70,9 @@ void switch_batt() {
     timefreq = batt_timefreq;
 }
 
-// assign values to variable if comma separated
-// if not, assign value to two variables
+/* assign values to variable if comma separated
+ * if not, assign value to two variables
+ */
 void assign_values_from_param(char* parameter, int* charging, int* battery) {
     int count = 0;
     char *token = strtok(parameter, ",");
@@ -110,7 +118,8 @@ int main(int argc, char *argv[]) {
     step =		batt_step=	wall_step = 10;
     timefreq =		batt_timefreq=	wall_timefreq = 300;
 
-    unveil("/", "r");
+    if (unveil("/var/empty", "r") == -1)
+        err(1, "unveil failed");
     unveil(NULL, NULL);
 
     while((opt = getopt(argc, argv, "d:hi:l:m:qr:s:t:")) != -1) {
@@ -176,14 +185,14 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, quit_gracefully);
     set_policy("manual");
 
-    // avoid weird reading for first delta
+    /* avoid weird reading for first delta */
     if (sysctl(mib_load, 2, &cpu_previous, &len_cpu, NULL, 0) == -1)
         err(1, "sysctl");
     usleep(1000*500);
 
     /* main loop */
     for(;;) {
-        // get if using power plug or not
+        /* get if using power plug or not */
         if (sysctl(mib_powerplug, 2, &value, &len, NULL, 0) == -1)
             err(1, "sysctl");
 
@@ -194,16 +203,16 @@ int main(int argc, char *argv[]) {
             switch_wall();
 
 
-        // get current frequency
+        /* get current frequency */
         if (sysctl(mib_perf, 2, &current_frequency, &len, NULL, 0) == -1)
             err(1, "sysctl");
         if(quiet == 0) printf("perf: %3i |", current_frequency);
 
-        // get where the CPU time is spent, last field is IDLE
+        /* get where the CPU time is spent, last field is IDLE */
         if (sysctl(mib_load, 2, &cpu, &len_cpu, NULL, 0) == -1)
             err(1, "sysctl");
 
-        // calculate delta between old and last cpu readings
+        /* calculate delta between old and last cpu readings */
         cpu_usage = cpu[0]-cpu_previous[0] +
             cpu[1]-cpu_previous[1] +
             cpu[2]-cpu_previous[2] +
@@ -211,33 +220,35 @@ int main(int argc, char *argv[]) {
             cpu[4]-cpu_previous[4] +
             cpu[5]-cpu_previous[5];
 
-        // debug
-        //if(quiet == 0) printf("\nDEBUG: User: %3i\tNice: %3i\t Sys: %3i\tSpin: %3i\t Intr: %3i\tIdle: %3i\n",
-        //       cpu[0]-cpu_previous[0],
-        //       cpu[1]-cpu_previous[1],
-        //       cpu[2]-cpu_previous[2],
-        //       cpu[3]-cpu_previous[3],
-        //       cpu[4]-cpu_previous[4],
-        //       cpu[5]-cpu_previous[5]);
-        //if(quiet == 0) printf("cpu usage = %i et idle = %i\n", cpu_usage, cpu[5] - cpu_previous[5]);
+        /* debug */
+		/*
+        if(quiet == 0) printf("\nDEBUG: User: %3i\tNice: %3i\t Sys: %3i\tSpin: %3i\t Intr: %3i\tIdle: %3i\n",
+               cpu[0]-cpu_previous[0],
+               cpu[1]-cpu_previous[1],
+               cpu[2]-cpu_previous[2],
+               cpu[3]-cpu_previous[3],
+               cpu[4]-cpu_previous[4],
+               cpu[5]-cpu_previous[5]);
+        if(quiet == 0) printf("cpu usage = %i et idle = %i\n", cpu_usage, cpu[5] - cpu_previous[5]);
+		*/
 
         cpu_usage_percent = 100-round(100*(cpu[5]-cpu_previous[5])/cpu_usage);
         memcpy(cpu_previous, cpu, sizeof(cpu));
         if(quiet == 0) printf("usage: %3i%% |", cpu_usage_percent);
 
-        // change frequency
+        /* change frequency */
         len = sizeof(frequency);
 
-        // small brain condition to increase CPU
+        /* small brain condition to increase CPU */
         if(cpu_usage_percent > threshold) {
 
-            // increase frequency by step if under max
+            /* increase frequency by step if under max */
             if(frequency+step < max)
                 frequency = frequency + step;
             else
                 frequency = max;
 
-            // don't try to set frequency more than 100%
+            /* don't try to set frequency more than 100% */
             if( frequency > 100 )
                 frequency = 100;
 
@@ -249,13 +260,13 @@ int main(int argc, char *argv[]) {
         else {
 
             if(inertia_timer == 0) {
-                // keep frequency more than min
+                /* keep frequency more than min */
                 if(frequency-down_step < min)
                     frequency = min;
                 else
                     frequency = frequency - down_step;
 
-                // don't try to set frequency below 0%
+                /* don't try to set frequency below 0% */
                 if (frequency < 0 )
                     frequency = 0;
 
