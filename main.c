@@ -255,7 +255,8 @@ int main(int argc, char *argv[]) {
             if( frequency > 100 )
                 frequency = 100;
 
-            inertia_timer = inertia;
+	    if(inertia_timer < inertia)
+                inertia_timer++;
 
             if (sysctl(mib_perf, 2, NULL, 0, &frequency, len) == -1)
                 err(1, "sysctl");
