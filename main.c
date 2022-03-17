@@ -185,6 +185,9 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, quit_gracefully);
     set_policy("manual");
 
+    if (quiet == 0)
+        printf("mode;frequency;cpu usage;inertia;new frequency\n");
+
     /* avoid weird reading for first delta */
     if (sysctl(mib_load, 2, &cpu_previous, &len_cpu, NULL, 0) == -1)
         err(1, "sysctl");
@@ -196,7 +199,7 @@ int main(int argc, char *argv[]) {
         if (sysctl(mib_powerplug, 2, &value, &len, NULL, 0) == -1)
             err(1, "sysctl");
 
-        if(quiet == 0) printf("power: %i |", value);
+        if(quiet == 0) printf("%i;", value);
         if(value ==0)
             switch_batt();
         else
@@ -206,7 +209,7 @@ int main(int argc, char *argv[]) {
         /* get current frequency */
         if (sysctl(mib_perf, 2, &current_frequency, &len, NULL, 0) == -1)
             err(1, "sysctl");
-        if(quiet == 0) printf("perf: %3i |", current_frequency);
+        if(quiet == 0) printf("%i;", current_frequency);
 
         /* get where the CPU time is spent, last field is IDLE */
         if (sysctl(mib_load, 2, &cpu, &len_cpu, NULL, 0) == -1)
@@ -234,7 +237,7 @@ int main(int argc, char *argv[]) {
 
         cpu_usage_percent = 100-round(100*(cpu[5]-cpu_previous[5])/cpu_usage);
         memcpy(cpu_previous, cpu, sizeof(cpu));
-        if(quiet == 0) printf("usage: %3i%% |", cpu_usage_percent);
+        if(quiet == 0) printf("%i;", cpu_usage_percent);
 
         /* change frequency */
         len = sizeof(frequency);
@@ -277,7 +280,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if(quiet == 0) printf("inertia: %2i |new freq: %3i", inertia_timer, frequency);
+        if(quiet == 0) printf("%i;%i;", inertia_timer, frequency);
 
         if(quiet == 0) printf("\n");
         usleep(1000*timefreq);
