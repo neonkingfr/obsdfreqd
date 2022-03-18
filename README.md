@@ -18,6 +18,8 @@ flags -q` for example.
 
 Start the service with `rcctl start obsdfreqd`.
 
+**If you use `apmd` service, you have to start it either with `-H` or `-L` flag, otherwise it will start after **obsdfreqd** and set the performance policy to automatic and **obsdfreqd** will crash**.
+
 # Usage
 
 Parameters are applied when both plugged on the wall or on battery, parameters can have two values comma separated to give different values when plugged on wall and for when on battery.

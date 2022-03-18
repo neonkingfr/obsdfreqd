@@ -73,4 +73,17 @@ has a verbose mode to get realtime information about frequency.
 .Sh LICENSE
 See the LICENSE file for the terms of redistribution.
 .Sh BUGS
-There may be bugs.
+.Pp
+When set to run a startup, if you also start the
+.Xr apmd 8
+service, make sure to start it with
+.Fl H
+or
+.Fl L
+to avoid
+.Xr apmd 8
+to reset the performance policy to automatic which would cause
+.Nm
+to crash.
+.Pp
+There may be other bugs.
