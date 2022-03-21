@@ -2,6 +2,15 @@
 
 Userland CPU frequency scheduling for OpenBSD
 
+# TLDR
+
+- clone this repository
+- as root `make install`
+- as root `rcctl enable obsdfreqd` and `rcctl stop apmd ; rcctl disable apmd`
+- as root `rcctl start obsdfreqd`
+- apmd can be kept but not with flag `-A`
+- most interesting flag for end users is `-T`
+
 # Compilation
 
 As easy as `make`
