@@ -105,6 +105,7 @@ int main(int argc, char *argv[]) {
     int mib_load[2];
     long cpu[CPUSTATES], cpu_previous[CPUSTATES];
     int frequency = 0;
+    int current_mode;
     int quiet = 0;
     int value, current_frequency, inertia_timer = 0;
     int cpu_usage_percent = 0, cpu_usage;
@@ -200,10 +201,13 @@ int main(int argc, char *argv[]) {
             err(1, "sysctl");
 
         if(quiet == 0) printf("%i;", value);
-        if(value ==0)
-            switch_batt();
-        else
-            switch_wall();
+        if(current_mode != value) {
+            current_mode = value;
+            if(value == 0)
+                switch_batt();
+            else
+                switch_wall();
+        }
 
 
         /* get current frequency */
