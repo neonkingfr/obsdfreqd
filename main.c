@@ -30,7 +30,6 @@ float get_temp() {
     FILE *fp;
     char path[1035];
     char *eptr;
-    int ch;
 
     fp = popen("/usr/sbin/sysctl -n hw.sensors.cpu0", "r");
     if (fp == NULL)
