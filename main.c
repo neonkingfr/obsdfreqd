@@ -44,14 +44,10 @@ float get_temp() {
 
 /* define the policy to auto or manual */
 void set_policy(const char* policy) {
-    int mib[2];
-    size_t len;
+    int mib[2] = { CTL_HW, HW_PERFPOLICY };
 
-    mib[0] = CTL_HW;
-    mib[1] = HW_PERFPOLICY;
-    len = sizeof(policy);
-    if (sysctl(mib, 2, NULL, 0, (void *)policy, len) == -1)
-        err(1, "sysctl");
+    if (sysctl(mib, 2, NULL, 0, (void *)policy, strlen(policy) + 1) == -1)
+        err(1, "sysctl: setting policy");
 }
 
 /* restore policy auto upon exit */
@@ -286,8 +282,8 @@ int main(int argc, char *argv[]) {
 
             if (sysctl(mib_perf, 2, NULL, 0, &frequency, len) == -1)
                 err(1, "sysctl");
-        }
-        else {
+
+        } else {
 
             if(inertia_timer == 0) {
                 /* keep frequency more than min */
