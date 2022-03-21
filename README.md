@@ -32,10 +32,11 @@ Parameters are applied when both plugged on the wall or on battery, parameters c
 - `-r threshold` sets the CPU usage in % that will trigger the frequency increase, 30% is the default
 - `-s stepfrequency` sets the percent of frequency added every cycle when increasing, 10% is default
 - `-t timefreq` sets the milliseconds between each poll, 300 is the default
+- `-T maxtemperature` sets the temperature threshold under which the maximum frequency will be temporary lowered until the CPU cools down
 
 **Example**:
 
-`obsdfreqd -m 100,50 -r 40` will start the daemon, when power is plugged in, maximum frequency is 100 and threshold is 40, on battery the threshold is 40 and the max is 50.
+`obsdfreqd -T 90,65` will start the daemon, when power is plugged in, maximum temperature is set to 90°C and 65°C when on battery.
 
 # Explanation
 
@@ -44,6 +45,8 @@ The current algorithm works this way:
 If CPU usage > `threshold`, increase frequency by `stepfrequency` up to `maxfrequency` every `timefreq` milliseconds and keep this frequency at least `inertia` cycles.
 
 If CPU usage <= `threshold`, reduce frequency by `downstepfrequency` down to `minfrequency` every `timefreq` milliseconds when `inertia` reached 0. `inertia` lose one point every cycle the CPU usage is below `threshold`.
+
+When flag `-T` is used, if the temperature exceeds the defined limit, the `maxfrequency` is decremented every cycle. When the current temperature is below the limit, the frequency limit is incremented at every cycle.
 
 When switching from/to battery, values switch to mode specific when user defined.
 

@@ -15,6 +15,7 @@
 .Op Fl r Ar threshold
 .Op Fl s Ar stepfrequency
 .Op Fl t Ar timefreq
+.Op Fl T Ar maxtemperature
 .Sh DESCRIPTION
 .Pp
 .Nm
@@ -46,6 +47,11 @@ Defines the CPU usage in percent above which the frequency is increased.
 Defines the frequency increase step in percent.
 .It Op Fl t Ar timefreq
 Defines the time in milliseconds between each cycle.
+.It Op Fl T Ar maxtemperature
+Defines the maximum temperature in Celcius
+.Nm
+will allow before lowering the maximum frequency until it the temperature
+cooled down.
 .Ed
 .Sh EXIT STATUS
 .Pp
