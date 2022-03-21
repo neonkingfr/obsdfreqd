@@ -278,18 +278,6 @@ int main(int argc, char *argv[]) {
             cpu[4]-cpu_previous[4] +
             cpu[5]-cpu_previous[5];
 
-        /* debug */
-		/*
-        if(quiet == 0) printf("\nDEBUG: User: %3i\tNice: %3i\t Sys: %3i\tSpin: %3i\t Intr: %3i\tIdle: %3i\n",
-               cpu[0]-cpu_previous[0],
-               cpu[1]-cpu_previous[1],
-               cpu[2]-cpu_previous[2],
-               cpu[3]-cpu_previous[3],
-               cpu[4]-cpu_previous[4],
-               cpu[5]-cpu_previous[5]);
-        if(quiet == 0) printf("cpu usage = %i et idle = %i\n", cpu_usage, cpu[5] - cpu_previous[5]);
-		*/
-
         cpu_usage_percent = 100-round(100*(cpu[5]-cpu_previous[5])/cpu_usage);
         memcpy(cpu_previous, cpu, sizeof(cpu));
         if(verbose) printf("%i;", cpu_usage_percent);
