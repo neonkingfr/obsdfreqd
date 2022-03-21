@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     wall_max=		100;
     wall_threshold=	30;
     wall_down_step=	30;
-    wall_inertia=	5;
+    wall_inertia=	10;
     wall_step=		100;
     wall_timefreq=	100;
     wall_tmax=		0;
