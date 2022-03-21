@@ -10,15 +10,16 @@
 #include <string.h>
 #include <unistd.h>
 
-int min,	batt_min,	wall_min;
-int max,	batt_max,	wall_max;
-int threshold,	batt_threshold,	wall_threshold;
-int down_step,	batt_down_step,	wall_down_step;
-int inertia,	batt_inertia,	wall_inertia;
-int step,	batt_step,	wall_step;
-int timefreq,	batt_timefreq,	wall_timefreq;
-int temp_max,   batt_tmax,      wall_tmax;
+int hard_min_freq,	batt_min,	wall_min;
+int hard_max_freq,	batt_max,	wall_max;
+int threshold,		batt_threshold,	wall_threshold;
+int down_step,		batt_down_step,	wall_down_step;
+int inertia,		batt_inertia,	wall_inertia;
+int step,		batt_step,	wall_step;
+int timefreq,		batt_timefreq,	wall_timefreq;
+int temp_max,   	batt_tmax,      wall_tmax;
 int verbose = 0;
+int max;
 
 float get_temp(void);
 void set_policy(const char*);
@@ -64,8 +65,8 @@ void usage(void) {
 
 /* switch to wall profile */
 void switch_wall() {
-    min = wall_min;
-    max = wall_max;
+    hard_min_freq = wall_min;
+    hard_max_freq = max = wall_max;
     threshold = wall_threshold;
     down_step = wall_down_step;
     inertia = wall_inertia;
@@ -76,8 +77,8 @@ void switch_wall() {
 
 /* switch to battery profile */
 void switch_batt() {
-    min = batt_min;
-    max = batt_max;
+    hard_min_freq = batt_min;
+    hard_max_freq = max = batt_max;
     threshold = batt_threshold;
     down_step = batt_down_step;
     inertia = batt_inertia;
@@ -130,14 +131,14 @@ int main(int argc, char *argv[]) {
     size_t len, len_cpu;
 
     // battery defaults
-    min =	batt_min=	0;
-    max =	batt_max=	100;
-    threshold =	batt_threshold=	30;
-    down_step =	batt_down_step=	100;
-    inertia =	batt_inertia=	5;
-    step =	batt_step=	100;
-    timefreq =	batt_timefreq=	100;
-    temp_max =	batt_tmax=	0;
+    hard_min_freq =	batt_min=	0;
+    hard_max_freq =	batt_max=	100;
+    threshold =		batt_threshold=	30;
+    down_step =		batt_down_step=	100;
+    inertia =		batt_inertia=	5;
+    step =		batt_step=	100;
+    timefreq =		batt_timefreq=	100;
+    temp_max =		batt_tmax=	0;
 
     // wall defaults
     wall_min=		0;
@@ -167,12 +168,12 @@ int main(int argc, char *argv[]) {
             break;
         case 'l':
             assign_values_from_param(optarg, &wall_min, &batt_min);
-            if(min > 100 || min < 0)
+            if(hard_min_freq > 100 || hard_min_freq < 0)
                 err(1, "minimum frequency must be between 0 and 100");
             break;
         case 'm':
             assign_values_from_param(optarg, &wall_max, &batt_max);
-            if(max > 100 || max < 0)
+            if(hard_max_freq > 100 || hard_max_freq < 0)
                 err(1, "maximum frequency must be between 0 and 100");
             break;
         case 'v':
@@ -211,6 +212,10 @@ int main(int argc, char *argv[]) {
     signal(SIGINT,  quit_gracefully);
     signal(SIGTERM, quit_gracefully);
     set_policy("manual");
+    switch_batt();
+
+    if(hard_max_freq < hard_min_freq)
+        err(1, "maximum frequency can't be smaller than minimum frequency");
 
     if (verbose) {
         if(temp_max > 0) {
@@ -245,10 +250,10 @@ int main(int argc, char *argv[]) {
         if(temp_max > 0) {
             temp = get_temp();
             if(temp > temp_max) {
-                if(max > min)
+                if(max > hard_min_freq)
                     max--;
             } else {
-                if(max < 100)
+                if(max < hard_max_freq)
                     max++;
             }
             if(verbose) printf("%.0f;%i;", temp, max);
@@ -288,8 +293,8 @@ int main(int argc, char *argv[]) {
                 frequency = max;
 
             /* don't try to set frequency more than 100% */
-            if( frequency > 100 )
-                frequency = 100;
+            if( frequency > hard_max_freq )
+                frequency = hard_max_freq;
 
 	    if(inertia_timer < inertia)
                 inertia_timer++;
@@ -301,14 +306,14 @@ int main(int argc, char *argv[]) {
 
             if(inertia_timer == 0) {
                 /* keep frequency more than min */
-                if(frequency-down_step < min)
-                    frequency = min;
+                if(frequency-down_step < hard_min_freq)
+                    frequency = hard_min_freq;
                 else
                     frequency = frequency - down_step;
 
                 /* don't try to set frequency below 0% */
-                if (frequency < 0 )
-                    frequency = 0;
+                if (frequency < hard_min_freq )
+                    frequency = hard_min_freq;
 
                 if (sysctl(mib_perf, 2, NULL, 0, &frequency, len) == -1)
                     err(1, "sysctl");
