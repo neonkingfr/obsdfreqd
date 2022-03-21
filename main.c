@@ -116,9 +116,11 @@ void assign_values_from_param(char* parameter, int* charging, int* battery) {
 int main(int argc, char *argv[]) {
 
     int opt;
-    int mib_perf[2];
-    int mib_powerplug[2];
-    int mib_load[2];
+
+    int mib_perf[2] =	{ CTL_HW,	HW_SETPERF };
+    int mib_powerplug[2] =	{ CTL_HW,	HW_POWER };
+    int mib_load[2] =	{ CTL_KERN,	KERN_CPTIME };
+
     long cpu[CPUSTATES], cpu_previous[CPUSTATES];
     int frequency = 0;
     int current_mode;
@@ -202,15 +204,6 @@ int main(int argc, char *argv[]) {
            return 1;
         }
     }
-
-    mib_perf[0] = CTL_HW;
-    mib_perf[1] = HW_SETPERF;
-
-    mib_powerplug[0] = CTL_HW;
-    mib_powerplug[1] = HW_POWER;
-
-    mib_load[0] = CTL_KERN;
-    mib_load[1] = KERN_CPTIME;
 
     len = sizeof(value);
     len_cpu = sizeof(cpu);
