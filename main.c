@@ -17,6 +17,7 @@ int down_step,	batt_down_step,	wall_down_step;
 int inertia,	batt_inertia,	wall_inertia;
 int step,	batt_step,	wall_step;
 int timefreq,	batt_timefreq,	wall_timefreq;
+int temp_max,   batt_tmax,      wall_tmax;
 
 float get_temp(void);
 void set_policy(const char*);
@@ -69,6 +70,7 @@ void switch_wall() {
     inertia = wall_inertia;
     step = wall_step;
     timefreq = wall_timefreq;
+    temp_max = wall_tmax;
 }
 
 /* switch to battery profile */
@@ -80,6 +82,7 @@ void switch_batt() {
     inertia = batt_inertia;
     step = batt_step;
     timefreq = batt_timefreq;
+    temp_max = batt_tmax;
 }
 
 /* assign values to variable if comma separated
@@ -121,7 +124,6 @@ int main(int argc, char *argv[]) {
     int quiet = 0;
     int value, current_frequency, inertia_timer = 0;
     int cpu_usage_percent = 0, cpu_usage;
-    float temp_max = 0;
     float temp;
     size_t len, len_cpu;
 
@@ -133,15 +135,17 @@ int main(int argc, char *argv[]) {
     inertia =	batt_inertia=	5;
     step =	batt_step=	100;
     timefreq =	batt_timefreq=	100;
+    temp_max =	batt_tmax=	0;
 
     // wall defaults
-    wall_min = 0;
-    wall_max = 100;
-    wall_threshold = 30;
-    wall_down_step = 30;
-    wall_inertia = 5;
-    wall_step = 100;
-    wall_timefreq = 100;
+    wall_min=		0;
+    wall_max=		100;
+    wall_threshold=	30;
+    wall_down_step=	30;
+    wall_inertia=	5;
+    wall_step=		100;
+    wall_timefreq=	100;
+    wall_tmax=		0;
 
     //if (unveil("/var/empty", "r") == -1)
     //    err(1, "unveil failed");
@@ -188,7 +192,9 @@ int main(int argc, char *argv[]) {
                 err(1, "time frequency must be positive");
             break;
         case 'T':
-            temp_max = atoi(optarg);
+            assign_values_from_param(optarg, &wall_tmax, &batt_tmax);
+            if(wall_tmax <= 0 || batt_tmax <= 0)
+                err(1, "temperature must be positive");
             break;
         case 'h':
         default:
