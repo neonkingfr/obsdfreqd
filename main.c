@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <time.h>
+#include <sys/time.h>
+#include <sys/sensors.h>
 #include <sys/sched.h>
 #include <signal.h>
 #include <string.h>
@@ -21,7 +23,7 @@ int temp_max,   	batt_tmax,      wall_tmax;
 int verbose = 0;
 int max;
 
-float get_temp(void);
+int  get_temp(void);
 void set_policy(const char*);
 void quit_gracefully(int signum);
 void usage(void);
@@ -29,19 +31,25 @@ void switch_wall(void);
 void switch_batt(void);
 void assign_values_from_param(char*, int*, int*);
 
-float get_temp() {
-    FILE *fp;
-    char path[1035];
-    char *eptr;
+int get_temp() {
+    struct sensor sensor;
+    int mib[5];
+    int value = 0;
+    size_t len = sizeof(sensor);
 
-    fp = popen("/usr/sbin/sysctl -n hw.sensors.cpu0", "r");
-    if (fp == NULL)
-        err(1, "popen failed");
-    fgets(path, sizeof(path), fp);
+    mib[0] = CTL_HW;
+    mib[1] = HW_SENSORS;
+    mib[2] = 0;
+    mib[3] = SENSOR_TEMP;
+    mib[4] = 0;
 
-    char *token = strtok(path, " ");
-    pclose(fp);
-    return(strtof(token, &eptr));
+    if (sysctl(mib, 5, &sensor, &len, NULL, 0) == -1)
+        err(1, "sysctl to get temperature");
+
+    // convert from uK to C
+    value = (sensor.value - 273150000) / 1000 / 1000;
+
+    return(value);
 }
 
 /* define the policy to auto or manual */
@@ -130,8 +138,6 @@ int main(int argc, char *argv[]) {
     float temp;
     size_t len, len_cpu;
 
-    int temp_check = 0;
-
     // battery defaults
     hard_min_freq =	batt_min=	0;
     hard_max_freq =	batt_max=	100;
@@ -152,9 +158,9 @@ int main(int argc, char *argv[]) {
     wall_timefreq=	100;
     wall_tmax=		0;
 
-    //if (unveil("/var/empty", "r") == -1)
-    //    err(1, "unveil failed");
-    //unveil(NULL, NULL);
+    if (unveil("/var/empty", "r") == -1)
+        err(1, "unveil failed");
+    unveil(NULL, NULL);
 
     while((opt = getopt(argc, argv, "d:hi:l:m:r:s:t:T:v")) != -1) {
         switch(opt) {
@@ -251,12 +257,8 @@ int main(int argc, char *argv[]) {
         /* manage temperature */
         if(temp_max > 0) {
 
-            /* temp sensor is updated every 5 seconds
-             * wait every 5 seconds to update it */
-            if(temp_check++ > 5000/timefreq/5) {
-                temp_check = 0;
-                temp = get_temp();
-            }
+            temp = get_temp();
+
             if(temp > temp_max) {
                 if(max > hard_min_freq)
                     max--;
