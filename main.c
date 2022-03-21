@@ -18,12 +18,29 @@ int inertia,	batt_inertia,	wall_inertia;
 int step,	batt_step,	wall_step;
 int timefreq,	batt_timefreq,	wall_timefreq;
 
+float get_temp(void);
 void set_policy(const char*);
 void quit_gracefully(int signum);
 void usage(void);
 void switch_wall(void);
 void switch_batt(void);
 void assign_values_from_param(char*, int*, int*);
+
+float get_temp() {
+    FILE *fp;
+    char path[1035];
+    char *eptr;
+    int ch;
+
+    fp = popen("/usr/sbin/sysctl -n hw.sensors.cpu0", "r");
+    if (fp == NULL)
+        err(1, "popen failed");
+    fgets(path, sizeof(path), fp);
+
+    char *token = strtok(path, " ");
+    pclose(fp);
+    return(strtof(token, &eptr));
+}
 
 /* define the policy to auto or manual */
 void set_policy(const char* policy) {
@@ -109,6 +126,8 @@ int main(int argc, char *argv[]) {
     int quiet = 0;
     int value, current_frequency, inertia_timer = 0;
     int cpu_usage_percent = 0, cpu_usage;
+    float temp_max = 0;
+    float temp;
     size_t len, len_cpu;
 
     min =		batt_min=	wall_min = 0;
@@ -119,11 +138,11 @@ int main(int argc, char *argv[]) {
     step =		batt_step=	wall_step = 10;
     timefreq =		batt_timefreq=	wall_timefreq = 300;
 
-    if (unveil("/var/empty", "r") == -1)
-        err(1, "unveil failed");
-    unveil(NULL, NULL);
+    //if (unveil("/var/empty", "r") == -1)
+    //    err(1, "unveil failed");
+    //unveil(NULL, NULL);
 
-    while((opt = getopt(argc, argv, "d:hi:l:m:qr:s:t:")) != -1) {
+    while((opt = getopt(argc, argv, "d:hi:l:m:qr:s:t:T:")) != -1) {
         switch(opt) {
         case 'd':
             assign_values_from_param(optarg, &wall_down_step, &batt_down_step);
@@ -163,6 +182,9 @@ int main(int argc, char *argv[]) {
             if(wall_timefreq <= 0 || batt_timefreq <= 0)
                 err(1, "time frequency must be positive");
             break;
+        case 'T':
+            temp_max = atoi(optarg);
+            break;
         case 'h':
         default:
            usage();
@@ -187,7 +209,7 @@ int main(int argc, char *argv[]) {
     set_policy("manual");
 
     if (quiet == 0)
-        printf("mode;frequency;cpu usage;inertia;new frequency\n");
+        printf("mode;frequency;cpu usage;inertia;new frequency;temp;max_freq\n");
 
     /* avoid weird reading for first delta */
     if (sysctl(mib_load, 2, &cpu_previous, &len_cpu, NULL, 0) == -1)
@@ -286,6 +308,19 @@ int main(int argc, char *argv[]) {
         }
 
         if(quiet == 0) printf("%i;%i;", inertia_timer, frequency);
+
+        // manage temperature
+        if(temp_max > 0) {
+            temp = get_temp();
+            if(temp > temp_max) {
+                if(max > min)
+                    max--;
+            } else {
+                if(max < 100)
+                    max++;
+            }
+            printf("%.0f;%i", temp, max);
+        }
 
         if(quiet == 0) printf("\n");
         usleep(1000*timefreq);
