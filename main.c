@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
     set_policy("manual");
 
     if (quiet == 0)
-        printf("mode;frequency;cpu usage;inertia;new frequency;temp;max_freq\n");
+        printf("mode;Temperature;maximum_frequency;current_frequency;cpu usage;inertia;new frequency\n");
 
     /* avoid weird reading for first delta */
     if (sysctl(mib_load, 2, &cpu_previous, &len_cpu, NULL, 0) == -1)
@@ -236,6 +236,18 @@ int main(int argc, char *argv[]) {
                 switch_wall();
         }
 
+        // manage temperature
+        if(temp_max > 0) {
+            temp = get_temp();
+            if(temp > temp_max) {
+                if(max > min)
+                    max--;
+            } else {
+                if(max < 100)
+                    max++;
+            }
+            printf("%.0f;%i;", temp, max);
+        }
 
         /* get current frequency */
         if (sysctl(mib_perf, 2, &current_frequency, &len, NULL, 0) == -1)
@@ -313,19 +325,6 @@ int main(int argc, char *argv[]) {
         }
 
         if(quiet == 0) printf("%i;%i;", inertia_timer, frequency);
-
-        // manage temperature
-        if(temp_max > 0) {
-            temp = get_temp();
-            if(temp > temp_max) {
-                if(max > min)
-                    max--;
-            } else {
-                if(max < 100)
-                    max++;
-            }
-            printf("%.0f;%i", temp, max);
-        }
 
         if(quiet == 0) printf("\n");
         usleep(1000*timefreq);
