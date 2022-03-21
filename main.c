@@ -125,13 +125,23 @@ int main(int argc, char *argv[]) {
     float temp;
     size_t len, len_cpu;
 
-    min =		batt_min=	wall_min = 0;
-    max =		batt_max=	wall_max = 100;
-    threshold =		batt_threshold=	wall_threshold = 30;
-    down_step =		batt_down_step=	wall_down_step = 100;
-    inertia =		batt_inertia=	wall_inertia = 0;
-    step =		batt_step=	wall_step = 10;
-    timefreq =		batt_timefreq=	wall_timefreq = 300;
+    // battery defaults
+    min =	batt_min=	0;
+    max =	batt_max=	100;
+    threshold =	batt_threshold=	30;
+    down_step =	batt_down_step=	100;
+    inertia =	batt_inertia=	5;
+    step =	batt_step=	100;
+    timefreq =	batt_timefreq=	100;
+
+    // wall defaults
+    wall_min = 0;
+    wall_max = 100;
+    wall_threshold = 30;
+    wall_down_step = 30;
+    wall_inertia = 5;
+    wall_step = 100;
+    wall_timefreq = 100;
 
     //if (unveil("/var/empty", "r") == -1)
     //    err(1, "unveil failed");
