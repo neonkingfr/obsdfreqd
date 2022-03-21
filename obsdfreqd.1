@@ -6,7 +6,7 @@
 .Nd manage the CPU frequency on OpenBSD from userland
 .Sh SYNOPSIS
 .Nm
-.Op Fl q
+.Op Fl v
 .Op Fl h
 .Op Fl d Ar downstepfrequency
 .Op Fl i Ar inertia
@@ -28,8 +28,8 @@ Arguments can be comma separated to provide different values for when on battery
 if so, the first value is used when power plug is connected and second value
 when on battery.
 .Bl -tag -width
-.It Op Fl q
-Suppress standard output display.
+.It Op Fl v
+Enable verbose output in CSV format.
 .It Op Fl h
 Display usage
 .It Op Fl d Ar downstepfrequency

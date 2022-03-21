@@ -18,6 +18,7 @@ int inertia,	batt_inertia,	wall_inertia;
 int step,	batt_step,	wall_step;
 int timefreq,	batt_timefreq,	wall_timefreq;
 int temp_max,   batt_tmax,      wall_tmax;
+int verbose = 0;
 
 float get_temp(void);
 void set_policy(const char*);
@@ -58,7 +59,7 @@ void quit_gracefully(int signum) {
 }
 
 void usage(void) {
-    printf("obsdfreqd [-h] [-q] [-i cycles] [-l min_freq] [-m max_freq] [-d percent_down_freq_step] [-r threshold] [-s percent_freq_step] [-t milliseconds]\n");
+    printf("obsdfreqd [-h] [-v] [-i cycles] [-l min_freq] [-m max_freq] [-d percent_down_freq_step] [-r threshold] [-s percent_freq_step] [-t milliseconds]\n");
 }
 
 /* switch to wall profile */
@@ -121,7 +122,6 @@ int main(int argc, char *argv[]) {
     long cpu[CPUSTATES], cpu_previous[CPUSTATES];
     int frequency = 0;
     int current_mode;
-    int quiet = 0;
     int value, current_frequency, inertia_timer = 0;
     int cpu_usage_percent = 0, cpu_usage;
     float temp;
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
     //    err(1, "unveil failed");
     //unveil(NULL, NULL);
 
-    while((opt = getopt(argc, argv, "d:hi:l:m:qr:s:t:T:")) != -1) {
+    while((opt = getopt(argc, argv, "d:hi:l:m:r:s:t:T:v")) != -1) {
         switch(opt) {
         case 'd':
             assign_values_from_param(optarg, &wall_down_step, &batt_down_step);
@@ -173,8 +173,8 @@ int main(int argc, char *argv[]) {
             if(max > 100 || max < 0)
                 err(1, "maximum frequency must be between 0 and 100");
             break;
-        case 'q':
-            quiet = 1;
+        case 'v':
+            verbose = 1;
             break;
         case 'r':
             assign_values_from_param(optarg, &wall_threshold, &batt_threshold);
@@ -219,8 +219,13 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, quit_gracefully);
     set_policy("manual");
 
-    if (quiet == 0)
-        printf("mode;Temperature;maximum_frequency;current_frequency;cpu usage;inertia;new frequency\n");
+    if (verbose) {
+        if(temp_max > 0) {
+            printf("mode;Temperature;maximum_frequency;current_frequency;cpu usage;inertia;new frequency\n");
+        } else {
+            printf("mode;current_frequency;cpu usage;inertia;new frequency\n");
+        }
+    }
 
     /* avoid weird reading for first delta */
     if (sysctl(mib_load, 2, &cpu_previous, &len_cpu, NULL, 0) == -1)
@@ -233,7 +238,8 @@ int main(int argc, char *argv[]) {
         if (sysctl(mib_powerplug, 2, &value, &len, NULL, 0) == -1)
             err(1, "sysctl");
 
-        if(quiet == 0) printf("%i;", value);
+        if(verbose) printf("%i;", value);
+
         if(current_mode != value) {
             current_mode = value;
             if(value == 0)
@@ -252,13 +258,13 @@ int main(int argc, char *argv[]) {
                 if(max < 100)
                     max++;
             }
-            printf("%.0f;%i;", temp, max);
+            if(verbose) printf("%.0f;%i;", temp, max);
         }
 
         /* get current frequency */
         if (sysctl(mib_perf, 2, &current_frequency, &len, NULL, 0) == -1)
             err(1, "sysctl");
-        if(quiet == 0) printf("%i;", current_frequency);
+        if(verbose) printf("%i;", current_frequency);
 
         /* get where the CPU time is spent, last field is IDLE */
         if (sysctl(mib_load, 2, &cpu, &len_cpu, NULL, 0) == -1)
@@ -286,7 +292,7 @@ int main(int argc, char *argv[]) {
 
         cpu_usage_percent = 100-round(100*(cpu[5]-cpu_previous[5])/cpu_usage);
         memcpy(cpu_previous, cpu, sizeof(cpu));
-        if(quiet == 0) printf("%i;", cpu_usage_percent);
+        if(verbose) printf("%i;", cpu_usage_percent);
 
         /* change frequency */
         len = sizeof(frequency);
@@ -330,9 +336,8 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        if(quiet == 0) printf("%i;%i;", inertia_timer, frequency);
+        if(verbose) printf("%i;%i\n", inertia_timer, frequency);
 
-        if(quiet == 0) printf("\n");
         usleep(1000*timefreq);
     }
 

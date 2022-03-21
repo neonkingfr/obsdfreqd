@@ -13,8 +13,7 @@ Run `obsdfreqd` as root, quit with `Ctrl+C`.
 # Installation
 
 `make install` as root, enable the service using `rcctl enable
-obsdfreqd` and set flags as you want using `rcctl set obsdfreqd
-flags -q` for example.
+obsdfreqd`.
 
 Start the service with `rcctl start obsdfreqd`.
 
@@ -25,7 +24,7 @@ Start the service with `rcctl start obsdfreqd`.
 Parameters are applied when both plugged on the wall or on battery, parameters can have two values comma separated to give different values when plugged on wall and for when on battery.
 
 - `-h` show usage
-- `-q` quiet mode, silence output
+- `-v` verbose mode, CSV output if one wants to create diagrams
 - `-d downstepfrequency` sets the steps removed every cycle when decaying, default to 100
 - `-i inertia` sets the number of cycles after which the frequency will decay, 0 is the default
 - `-m maxfrequency` sets the maximum frequency the CPU can reach in percent, 100% is default
