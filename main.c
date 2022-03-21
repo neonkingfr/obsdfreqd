@@ -130,6 +130,8 @@ int main(int argc, char *argv[]) {
     float temp;
     size_t len, len_cpu;
 
+    int temp_check = 0;
+
     // battery defaults
     hard_min_freq =	batt_min=	0;
     hard_max_freq =	batt_max=	100;
@@ -246,9 +248,15 @@ int main(int argc, char *argv[]) {
                 switch_wall();
         }
 
-        // manage temperature
+        /* manage temperature */
         if(temp_max > 0) {
-            temp = get_temp();
+
+            /* temp sensor is updated every 5 seconds
+             * wait every 5 seconds to update it */
+            if(temp_check++ > 5000/timefreq/5) {
+                temp_check = 0;
+                temp = get_temp();
+            }
             if(temp > temp_max) {
                 if(max > hard_min_freq)
                     max--;
