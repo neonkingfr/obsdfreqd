@@ -1,6 +1,6 @@
 # obsdfreqd
 
-Userland CPU frequency scheduling for OpenBSD
+Userland CPU frequency scheduling for OpenBSD >= 7.1
 
 # TLDR
 
