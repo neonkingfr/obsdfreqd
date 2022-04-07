@@ -1,4 +1,4 @@
-PREFIX=/usr/local
+PREFIX?=/usr/local
 LDFLAGS  = -lm
 
 CFLAGS  += -pedantic -Wall -Wextra -Wmissing-prototypes \
@@ -16,5 +16,5 @@ clean:
 
 install: obsdfreqd
 	install -o root -g wheel -m 555 obsdfreqd ${PREFIX}/sbin/obsdfreqd
-	install -o root -g wheel -m 555 obsdfreqd.rc /etc/rc.d/obsdfreqd
+	install -o root -g wheel -m 555 obsdfreqd.rc ${DESTDIR}/etc/rc.d/obsdfreqd
 	install -o root -g wheel -m 444 obsdfreqd.1 ${PREFIX}/man/man1/obsdfreqd.1
