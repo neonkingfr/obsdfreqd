@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
 
     long cpu[CPUSTATES], cpu_previous[CPUSTATES];
     int frequency = 0;
-    int current_mode;
+    int current_mode = 0;
     int value, current_frequency, inertia_timer = 0;
     int cpu_usage_percent = 0, cpu_usage;
     float temp;
